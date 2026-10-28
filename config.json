@@ -104,7 +104,7 @@
       "all-time high",
       "record high"
     ],
-    "max_por_execucao": 5
+    "max_por_execucao": 3
   },
   "alertas": {
     "movimento_1h_pct": 3,
@@ -139,5 +139,45 @@
     "tolerancia_pct": 12,
     "toques_min": 2
   },
-  "fear_greed": true
+  "fear_greed": true,
+  "radar": {
+    "ativo": true,
+    "top_volume": 40,
+    "volume_min_usd": 20000000,
+    "excluir": [
+      "USDC",
+      "FDUSD",
+      "TUSD",
+      "USDP",
+      "DAI",
+      "USDE",
+      "BFUSD",
+      "XUSD",
+      "EUR",
+      "EURI",
+      "AEUR",
+      "TRY",
+      "BRL",
+      "WBTC",
+      "WBETH",
+      "PAXG"
+    ],
+    "timeframes": {
+      "1h": 120,
+      "4h": 120
+    },
+    "dl_pct": 30,
+    "max_no_relatorio": 5,
+    "pontuacao_min_relatorio": 40,
+    "alertas": true,
+    "pontuacao_min_alerta": 75,
+    "cooldown_horas": 8
+  },
+  "anti_spam": {
+    "max_alertas_hora": 6,
+    "silencio": {
+      "inicio": "00:30",
+      "fim": "07:30"
+    }
+  }
 }

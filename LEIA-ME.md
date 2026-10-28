@@ -2,6 +2,10 @@
 
 Corre sozinho no GitHub Actions a cada 15 minutos e envia para um canal do Discord:
 
+- **Radar de moedas:** de hora a hora analisa as moedas com mais volume na Binance (40 por defeito), procura ranges no 1h e no 4h e dá uma pontuação a cada setup. Mais pontos quando o preço está perto da borda do range ou acabou de fazer um desvio e voltar para dentro, quando o range tem muitos toques, quando a direção está a favor da tendência diária e quando a moeda tem muito volume. Os melhores aparecem no relatório; só os acima de 75 pontos geram alerta, e cada setup só avisa uma vez em 8 horas.
+- **Controlo de spam:** os alertas de cada execução seguem agrupados numa só mensagem, há um limite de alertas menores por hora (6) e horas de silêncio (00:30 às 07:30). Aberturas de mercado, avisos de notícias e alertas dos teus ranges passam sempre. O relatório da manhã diz quantos alertas ficaram em silêncio.
+- **Relatórios em cartões** do Discord, com cores, barras de posição no intervalo e a liquidez de cada moeda.
+
 - **Aberturas de mercado:** Tóquio, China e Hong Kong, Londres e Nova Iorque, nos dias úteis, na hora de Portugal (as mudanças de hora são tratadas automaticamente).
 - **Relatório às 08:00 e às 21:00:** preço, variação em 24h e 7 dias, tendência em 4h e no diário, mínimos e máximos, funding e open interest, notícias de alto impacto do dia e onde está o preço em cada um dos teus ranges.
 - **Avisos 30 minutos antes** de notícias de alto impacto dos EUA (CPI, Fed, emprego).
@@ -74,6 +78,8 @@ Edita o `niveis.json` diretamente no GitHub (ícone do lápis, funciona no telem
 - `liquidez.moedas`: as moedas vigiadas nos varrimentos de máximos e mínimos.
 - `scanner`: moedas, timeframes, altura mínima e máxima do range (em % do preço), tolerância dos toques e número mínimo de toques de cada lado.
 - `fear_greed`: `false` para tirar o índice do relatório.
+- `radar`: `top_volume` (quantas moedas analisa), `volume_min_usd`, `excluir` (stablecoins e afins), `pontuacao_min_alerta` (sobe para receber menos alertas), `pontuacao_min_relatorio`, `max_no_relatorio`, `cooldown_horas`, e `ativo: false` para o desligar.
+- `anti_spam`: `max_alertas_hora` e as horas de `silencio` (apaga o bloco `silencio` para não ter horas de silêncio).
 
 ## Fontes de dados
 - Preços e velas: API pública da Binance (`data-api.binance.vision`).
