@@ -1,0 +1,37 @@
+{
+  "fuso": "Europe/Lisbon",
+  "moedas": ["BTC", "ETH", "SOL"],
+  "cotacao": "USDT",
+  "relatorios": {
+    "manhã": "08:00",
+    "noite": "21:00"
+  },
+  "mercados": [
+    { "nome": "Tóquio", "fuso": "Asia/Tokyo", "hora": "09:00", "nota": "Início da sessão asiática." },
+    { "nome": "China e Hong Kong", "fuso": "Asia/Hong_Kong", "hora": "09:30", "nota": "Sessão asiática em pleno." },
+    { "nome": "Londres", "fuso": "Europe/London", "hora": "08:00", "nota": "Entra o volume europeu; os mínimos e máximos da Ásia costumam ser testados." },
+    { "nome": "Nova Iorque", "fuso": "America/New_York", "hora": "09:30", "nota": "Abertura das ações americanas: a hora mais volátil do dia." }
+  ],
+  "calendario": {
+    "url": "https://nfs.faireconomy.media/ff_calendar_thisweek.json",
+    "moedas": ["USD"],
+    "impactos": ["High"],
+    "aviso_min": 30
+  },
+  "noticias": {
+    "feeds": [
+      { "nome": "CoinDesk", "url": "https://www.coindesk.com/arc/outboundfeeds/rss/" },
+      { "nome": "Cointelegraph", "url": "https://cointelegraph.com/rss" },
+      { "nome": "Decrypt", "url": "https://decrypt.co/feed" }
+    ],
+    "palavras": [" sec ", "etf", " fed ", "fomc", "powell", "cpi", "inflation", "rate cut", "rate hike", "interest rate",
+                 "tariff", "hack", "exploit", "liquidat", "bankrupt", "insolven", "delist", "halt", " ban ", "lawsuit",
+                 "blackrock", "tether", "stablecoin", "binance", "coinbase", "microstrategy", "all-time high", "record high"],
+    "max_por_execucao": 5
+  },
+  "alertas": {
+    "movimento_1h_pct": 3,
+    "funding_8h_pct": 0.05,
+    "zona_toque_pct": 15
+  }
+}

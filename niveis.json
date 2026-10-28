@@ -1,0 +1,14 @@
+{
+  "ranges": [
+    {
+      "id": "exemplo-btc",
+      "ativo": false,
+      "par": "BTCUSDT",
+      "topo": 0,
+      "fundo": 0,
+      "dl": 30,
+      "lado": "ambos",
+      "nota": "range 4h, substitui pelos teus valores e põe ativo a true"
+    }
+  ]
+}
