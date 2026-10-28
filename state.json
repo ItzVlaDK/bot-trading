@@ -41,94 +41,185 @@
   },
   "eventos_avisados": [],
   "noticias_vistas": [
-    "e08dab48bf91bf04",
-    "07dff853190420a4",
-    "8145a1b4d16906ed",
-    "1f63ebaf78649713",
-    "c15b77928fbbd6c1",
-    "759980ecc952679e",
-    "29f2a94e8babd916",
     "5176faa98700fadc",
-    "de5647cb036b4a3d",
-    "14028803ba81153b",
-    "d2f8bfb8d9156a7c",
-    "f9ea57fbc1a7c6c1",
-    "f88c12d007e73aa2",
-    "548b4b9f9260f058",
-    "8fe9ea7cddd29559",
-    "b8fe8f547c5e94cf",
-    "a9ebc99762762676",
-    "c755d493f7de3e5b",
-    "37582c1d9b1de5bd",
-    "9566370d5ce16527",
-    "022aa09a0aa09826",
-    "e7fad0eb8955598a",
-    "619001b181a60384",
-    "8056a0a3c730d7d7",
-    "797fbcf70f21e2f6",
-    "3a117f4aa9afb643",
-    "ba64758fdd2c544f",
-    "13ec1bec15d9a83c",
-    "1458964488b2e014",
-    "6f8fcd2ab4be9b79",
-    "11512b8e22b1dab7",
-    "54f18c2ea57520d8",
-    "662a627632e85167",
-    "cb6e418b737bb834",
-    "f75488c3c658b358",
-    "2731e82cc6ed354a",
-    "797fc4e4acbb385e",
-    "f51eedca7f2f661b",
-    "fd3bc15cb55f02e1",
-    "5e7abf31a70f5ec0",
-    "389da1271eda92f9",
-    "11420765f4824b24",
-    "63edb382b3980e10",
-    "b431ea497743c593",
-    "57317ccb1da5d355",
-    "50f0a759397ed93b",
-    "ed91a90cb52cbbaa",
-    "7172039a810ae3db",
-    "73b930251e554087",
-    "0d693d1b29f0168c",
-    "601b2fe4bd3a9d41",
-    "dc740edca0579bcb",
-    "4a1b0bebb48bf6b7",
-    "3e927f132614d69f",
     "7aa65f938c832354",
-    "b2130b746924151e",
-    "9e835367f4abda33",
-    "95f452935d773316",
-    "e972e17fd950d31c",
-    "d25672217fb08552",
-    "56321fbfb5e2062c",
-    "1159c61a6add2da4",
-    "470156869fec8d78",
-    "c850117b14cc86b6",
-    "eaff14906dea6106",
-    "e8c22c59c37106b2",
-    "15756155e04f2581",
     "646ba2656a29fcaa",
-    "3365502133ef2b4f",
-    "4624e273954a9cd8",
-    "41b5e1bc96c122dd",
-    "1ab55d17042e744b",
-    "c7cda4e4073e286c",
-    "f87aad76129cd7a8",
-    "e91e04d5bd21b284",
-    "7999e468421f238f",
-    "a46e2ed947d6a168",
-    "ef8d67694bcc0f05",
-    "6145c286b25b4e0c",
-    "dc2774e3fd5e530c",
-    "9e611d4905165e06",
+    "662a627632e85167",
     "033a582b875f4956",
+    "f75488c3c658b358",
+    "d25672217fb08552",
+    "601b2fe4bd3a9d41",
+    "f9ea57fbc1a7c6c1",
+    "a46e2ed947d6a168",
+    "759980ecc952679e",
+    "e8c22c59c37106b2",
+    "c755d493f7de3e5b",
+    "3a117f4aa9afb643",
+    "eaff14906dea6106",
+    "c15b77928fbbd6c1",
+    "41b5e1bc96c122dd",
+    "6f8fcd2ab4be9b79",
+    "797fbcf70f21e2f6",
+    "9566370d5ce16527",
+    "548b4b9f9260f058",
+    "f88c12d007e73aa2",
+    "dc2774e3fd5e530c",
+    "fd3bc15cb55f02e1",
+    "0d693d1b29f0168c",
+    "ef8d67694bcc0f05",
+    "73b930251e554087",
+    "e972e17fd950d31c",
+    "619001b181a60384",
+    "b431ea497743c593",
+    "e08dab48bf91bf04",
     "5a8d5f1b4f722357",
+    "1ab55d17042e744b",
+    "e91e04d5bd21b284",
+    "d2f8bfb8d9156a7c",
+    "50f0a759397ed93b",
+    "8056a0a3c730d7d7",
+    "4a1b0bebb48bf6b7",
+    "9e611d4905165e06",
+    "4624e273954a9cd8",
+    "13ec1bec15d9a83c",
+    "ba64758fdd2c544f",
+    "035f0337beff2f0f",
+    "a9ebc99762762676",
+    "f51eedca7f2f661b",
+    "1458964488b2e014",
+    "797fc4e4acbb385e",
+    "3e927f132614d69f",
+    "470156869fec8d78",
+    "57317ccb1da5d355",
+    "56321fbfb5e2062c",
+    "5e7abf31a70f5ec0",
+    "15756155e04f2581",
+    "3365502133ef2b4f",
+    "b8fe8f547c5e94cf",
+    "7172039a810ae3db",
+    "c7cda4e4073e286c",
+    "6145c286b25b4e0c",
     "3543a3111734bd3d",
-    "035f0337beff2f0f"
+    "de5647cb036b4a3d",
+    "03ba1bb319441702",
+    "54f18c2ea57520d8",
+    "37582c1d9b1de5bd",
+    "2731e82cc6ed354a",
+    "63edb382b3980e10",
+    "f87aad76129cd7a8",
+    "b2130b746924151e",
+    "11512b8e22b1dab7",
+    "95f452935d773316",
+    "dc740edca0579bcb",
+    "07dff853190420a4",
+    "8fe9ea7cddd29559",
+    "ed91a90cb52cbbaa",
+    "7999e468421f238f",
+    "022aa09a0aa09826",
+    "1f63ebaf78649713",
+    "1159c61a6add2da4",
+    "c850117b14cc86b6",
+    "8145a1b4d16906ed",
+    "11420765f4824b24",
+    "14028803ba81153b",
+    "cb6e418b737bb834",
+    "29f2a94e8babd916",
+    "9e835367f4abda33",
+    "389da1271eda92f9",
+    "e7fad0eb8955598a"
   ],
   "noticias_iniciadas": true,
   "alertas_tempo": {},
   "ranges": {},
-  "ultima_execucao": "2026-10-28T20:06:55.533926+00:00"
+  "ultima_execucao": "2026-10-28T20:22:09.922937+00:00",
+  "liquidez": {
+    "dia": "2026-10-28",
+    "niveis": {
+      "BTC": [
+        {
+          "nome": "máximo de ontem",
+          "preco": 81300.0,
+          "tipo": "max"
+        },
+        {
+          "nome": "mínimo de ontem",
+          "preco": 79506.0,
+          "tipo": "min"
+        },
+        {
+          "nome": "máximo da semana passada",
+          "preco": 84898.0,
+          "tipo": "max"
+        },
+        {
+          "nome": "mínimo da semana passada",
+          "preco": 79220.74,
+          "tipo": "min"
+        }
+      ],
+      "ETH": [
+        {
+          "nome": "máximo de ontem",
+          "preco": 2364.35,
+          "tipo": "max"
+        },
+        {
+          "nome": "mínimo de ontem",
+          "preco": 2297.44,
+          "tipo": "min"
+        },
+        {
+          "nome": "máximo da semana passada",
+          "preco": 2526.62,
+          "tipo": "max"
+        },
+        {
+          "nome": "mínimo da semana passada",
+          "preco": 2282.46,
+          "tipo": "min"
+        }
+      ]
+    },
+    "varridos": {
+      "BTC|máximo de ontem|81300.0": "2026-10-28",
+      "ETH|máximo de ontem|2364.35": "2026-10-28"
+    }
+  },
+  "candidatos": {
+    "BTC-4h": {
+      "topo": 84898.0,
+      "fundo": 79220.74
+    },
+    "ETH-4h": {
+      "topo": 2530.44,
+      "fundo": 2282.46
+    },
+    "SOL-4h": {
+      "topo": 109.2,
+      "fundo": 98.62
+    }
+  },
+  "oi_hist": {
+    "BTC": [
+      [
+        1793218929.922937,
+        3535840278.97086,
+        81233.0
+      ]
+    ],
+    "ETH": [
+      [
+        1793218929.922937,
+        2629716004.5098767,
+        2361.7
+      ]
+    ],
+    "SOL": [
+      [
+        1793218929.922937,
+        583488683.4048002,
+        102.46
+      ]
+    ]
+  }
 }
