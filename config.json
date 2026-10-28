@@ -1,37 +1,143 @@
 {
   "fuso": "Europe/Lisbon",
-  "moedas": ["BTC", "ETH", "SOL"],
+  "moedas": [
+    "BTC",
+    "ETH",
+    "SOL"
+  ],
   "cotacao": "USDT",
   "relatorios": {
     "manhã": "08:00",
     "noite": "21:00"
   },
   "mercados": [
-    { "nome": "Tóquio", "fuso": "Asia/Tokyo", "hora": "09:00", "nota": "Início da sessão asiática." },
-    { "nome": "China e Hong Kong", "fuso": "Asia/Hong_Kong", "hora": "09:30", "nota": "Sessão asiática em pleno." },
-    { "nome": "Londres", "fuso": "Europe/London", "hora": "08:00", "nota": "Entra o volume europeu; os mínimos e máximos da Ásia costumam ser testados." },
-    { "nome": "Nova Iorque", "fuso": "America/New_York", "hora": "09:30", "nota": "Abertura das ações americanas: a hora mais volátil do dia." }
+    {
+      "nome": "Tóquio",
+      "fuso": "Asia/Tokyo",
+      "hora": "09:00",
+      "nota": "Início da sessão asiática."
+    },
+    {
+      "nome": "China e Hong Kong",
+      "fuso": "Asia/Hong_Kong",
+      "hora": "09:30",
+      "nota": "Sessão asiática em pleno."
+    },
+    {
+      "nome": "Londres",
+      "fuso": "Europe/London",
+      "hora": "08:00",
+      "nota": "Entra o volume europeu; os mínimos e máximos da Ásia costumam ser testados.",
+      "sessao_anterior": {
+        "fuso": "Asia/Tokyo",
+        "hora": "09:00",
+        "rotulo": "da Ásia"
+      }
+    },
+    {
+      "nome": "Nova Iorque",
+      "fuso": "America/New_York",
+      "hora": "09:30",
+      "nota": "Abertura das ações americanas: a hora mais volátil do dia.",
+      "sessao_anterior": {
+        "fuso": "Europe/London",
+        "hora": "08:00",
+        "rotulo": "de Londres"
+      }
+    }
   ],
   "calendario": {
     "url": "https://nfs.faireconomy.media/ff_calendar_thisweek.json",
-    "moedas": ["USD"],
-    "impactos": ["High"],
-    "aviso_min": 30
+    "moedas": [
+      "USD"
+    ],
+    "impactos": [
+      "High"
+    ],
+    "aviso_min": 30,
+    "urls_extra": [
+      "https://nfs.faireconomy.media/ff_calendar_nextweek.json"
+    ]
   },
   "noticias": {
     "feeds": [
-      { "nome": "CoinDesk", "url": "https://www.coindesk.com/arc/outboundfeeds/rss/" },
-      { "nome": "Cointelegraph", "url": "https://cointelegraph.com/rss" },
-      { "nome": "Decrypt", "url": "https://decrypt.co/feed" }
+      {
+        "nome": "CoinDesk",
+        "url": "https://www.coindesk.com/arc/outboundfeeds/rss/"
+      },
+      {
+        "nome": "Cointelegraph",
+        "url": "https://cointelegraph.com/rss"
+      },
+      {
+        "nome": "Decrypt",
+        "url": "https://decrypt.co/feed"
+      }
     ],
-    "palavras": [" sec ", "etf", " fed ", "fomc", "powell", "cpi", "inflation", "rate cut", "rate hike", "interest rate",
-                 "tariff", "hack", "exploit", "liquidat", "bankrupt", "insolven", "delist", "halt", " ban ", "lawsuit",
-                 "blackrock", "tether", "stablecoin", "binance", "coinbase", "microstrategy", "all-time high", "record high"],
+    "palavras": [
+      " sec ",
+      "etf",
+      " fed ",
+      "fomc",
+      "powell",
+      "cpi",
+      "inflation",
+      "rate cut",
+      "rate hike",
+      "interest rate",
+      "tariff",
+      "hack",
+      "exploit",
+      "liquidat",
+      "bankrupt",
+      "insolven",
+      "delist",
+      "halt",
+      " ban ",
+      "lawsuit",
+      "blackrock",
+      "tether",
+      "stablecoin",
+      "binance",
+      "coinbase",
+      "microstrategy",
+      "all-time high",
+      "record high"
+    ],
     "max_por_execucao": 5
   },
   "alertas": {
     "movimento_1h_pct": 3,
     "funding_8h_pct": 0.05,
-    "zona_toque_pct": 15
-  }
+    "zona_toque_pct": 15,
+    "oi_1h_pct": 5
+  },
+  "liquidez": {
+    "moedas": [
+      "BTC",
+      "ETH"
+    ]
+  },
+  "scanner": {
+    "moedas": [
+      "BTC",
+      "ETH",
+      "SOL"
+    ],
+    "timeframes": {
+      "1h": 120,
+      "4h": 120
+    },
+    "altura_min_pct": {
+      "1h": 1.5,
+      "4h": 3
+    },
+    "altura_max_pct": {
+      "1h": 10,
+      "4h": 20
+    },
+    "tolerancia_pct": 12,
+    "toques_min": 2
+  },
+  "fear_greed": true
 }

@@ -8,6 +8,10 @@ Corre sozinho no GitHub Actions a cada 15 minutos e envia para um canal do Disco
 - **Notícias filtradas** por palavras-chave (SEC, ETF, Fed, hacks, liquidações, etc.).
 - **Alertas nos teus ranges DMT:** preço a chegar ao topo ou ao fundo, desvio para lá da linha, fecho de volta para dentro, e range invalidado ao passar a DL.
 - **Movimentos bruscos** (mais de 3% numa hora) e **funding extremo**.
+- **Liquidez:** máximo e mínimo de ontem e da semana passada, e da sessão anterior em cada abertura (Ásia na abertura de Londres, Londres na de Nova Iorque). Alerta quando um destes níveis é varrido e o preço fecha de volta.
+- **Ranges candidatos** no 1h e no 4h, procurados de hora a hora, com alerta quando aparece um novo.
+- **Open interest:** alerta quando sobe muito com o preço parado ou cai de repente com o preço a mexer (liquidações).
+- **Extras:** Fear & Greed no relatório da manhã, notícias do dia marcadas quando já saíram, aviso de fim de semana à sexta à noite e as notícias da semana seguinte no relatório de domingo.
 
 ## Instalação (uns 15 minutos)
 
@@ -66,12 +70,16 @@ Edita o `niveis.json` diretamente no GitHub (ícone do lápis, funciona no telem
 - `moedas`: as moedas dos relatórios e alertas.
 - `relatorios`: as horas dos relatórios.
 - `noticias.palavras`: as palavras que tornam uma notícia relevante. Mais palavras, mais mensagens.
-- `alertas.movimento_1h_pct`, `alertas.funding_8h_pct`, `alertas.zona_toque_pct`: os limites dos alertas.
+- `alertas.movimento_1h_pct`, `alertas.funding_8h_pct`, `alertas.zona_toque_pct`, `alertas.oi_1h_pct`: os limites dos alertas.
+- `liquidez.moedas`: as moedas vigiadas nos varrimentos de máximos e mínimos.
+- `scanner`: moedas, timeframes, altura mínima e máxima do range (em % do preço), tolerância dos toques e número mínimo de toques de cada lado.
+- `fear_greed`: `false` para tirar o índice do relatório.
 
 ## Fontes de dados
 - Preços e velas: API pública da Binance (`data-api.binance.vision`).
 - Funding e open interest: Hyperliquid.
-- Calendário económico: feed semanal da Forex Factory.
+- Calendário económico: feeds desta semana e da próxima da Forex Factory.
+- Fear & Greed: alternative.me.
 - Notícias: RSS do CoinDesk, Cointelegraph e Decrypt.
 
 Se uma fonte falhar, o resto continua a funcionar e o erro fica no registo da execução.

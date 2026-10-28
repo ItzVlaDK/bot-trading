@@ -1,7 +1,8 @@
 """
-Bot de mercado para Discord: aberturas de mercado, relatórios de manhã e à noite,
-notícias filtradas, calendário económico, alertas nos ranges DMT, movimentos bruscos
-e funding extremo. Corre no GitHub Actions a cada 15 minutos.
+Bot de mercado para Discord: aberturas de mercado com a liquidez da sessão anterior,
+relatórios de manhã e à noite, notícias filtradas, calendário económico, varrimentos de
+máximos e mínimos, ranges candidatos, open interest, movimentos bruscos, funding extremo
+e alertas nos ranges DMT. Corre no GitHub Actions a cada 15 minutos.
 """
 import datetime as dt
 import hashlib
@@ -124,6 +125,7 @@ def hyperliquid():
                 _HL[a["name"]] = {
                     "funding8h": float(c["funding"]) * 8 * 100,
                     "oi_usd": float(c["openInterest"]) * float(c["markPx"]),
+                    "preco": float(c["markPx"]),
                 }
             except (KeyError, TypeError, ValueError):
                 pass
@@ -169,18 +171,48 @@ def cruzou(hora, fuso, dias, ultima, agora):
 
 
 # ------------------------------------------------------------------ aberturas de mercado
+def maximo_minimo(simbolo, inicio, fim):
+    vs = [v for v in velas(simbolo, "15m", 60) if v["abre"] >= inicio.timestamp() and v["fecha"] <= fim.timestamp() + 1]
+    if not vs:
+        return None
+    return max(v["h"] for v in vs), min(v["l"] for v in vs)
+
+
 def aberturas(ultima, agora):
     for m in CFG.get("mercados", []):
         t = cruzou(m["hora"], m["fuso"], [0, 1, 2, 3, 4], ultima, agora)
         if not t:
             continue
-        extra = ""
+        linhas = [f"🔔 **Abertura de {m['nome']}** ({hora_local(t)} em Portugal). {m.get('nota', '')}"]
         try:
             tk = ticker24(simbolo_de("BTC"))
-            extra = f"\nBTC a {fmt(float(tk['lastPrice']))} ({pct(float(tk['priceChangePercent']))} em 24h)."
+            linhas.append(f"BTC a {fmt(float(tk['lastPrice']))} ({pct(float(tk['priceChangePercent']))} em 24h).")
         except Exception as e:
             log("aberturas/ticker", e)
-        enviar(f"🔔 **Abertura de {m['nome']}** ({hora_local(t)} em Portugal). {m.get('nota', '')}{extra}")
+        ant = m.get("sessao_anterior")
+        if ant:
+            tz = ZoneInfo(ant["fuso"])
+            d = t.astimezone(tz).date()
+            hh, mm = map(int, ant["hora"].split(":"))
+            inicio = dt.datetime(d.year, d.month, d.day, hh, mm, tzinfo=tz)
+            niveis = []
+            for moeda in CFG.get("liquidez", {}).get("moedas", []):
+                try:
+                    mm_ = maximo_minimo(simbolo_de(moeda), inicio, t)
+                    if not mm_:
+                        continue
+                    alto, baixo = mm_
+                    niveis.append(f"• {moeda}: máximo {fmt(alto)}, mínimo {fmt(baixo)}")
+                    juntar_niveis(moeda, [
+                        {"nome": f"máximo da sessão {ant['rotulo']}", "preco": alto, "tipo": "max"},
+                        {"nome": f"mínimo da sessão {ant['rotulo']}", "preco": baixo, "tipo": "min"},
+                    ])
+                except Exception as e:
+                    log("sessao_anterior", moeda, e)
+            if niveis:
+                linhas.append(f"**Liquidez da sessão {ant['rotulo']}** (stops acumulados acima e abaixo):")
+                linhas.extend(niveis)
+        enviar("\n".join(linhas))
 
 
 # ------------------------------------------------------------------ calendário económico
@@ -188,21 +220,28 @@ def calendario(agora):
     cal = ESTADO.setdefault("calendario", {"obtido": None, "eventos": []})
     obtido = dt.datetime.fromisoformat(cal["obtido"]) if cal.get("obtido") else None
     if obtido is None or agora - obtido > dt.timedelta(hours=6):
-        try:
-            r = HTTP.get(CFG["calendario"]["url"], timeout=20)
-            r.raise_for_status()
-            moedas = set(CFG["calendario"].get("moedas", ["USD"]))
-            impactos = set(CFG["calendario"].get("impactos", ["High"]))
-            eventos = []
-            for e in r.json():
-                if e.get("country") in moedas and e.get("impact") in impactos and e.get("date"):
-                    eventos.append({"titulo": e.get("title", "?"), "moeda": e.get("country"),
-                                    "data": dt.datetime.fromisoformat(e["date"]).astimezone(UTC).isoformat(),
-                                    "previsao": e.get("forecast") or "", "anterior": e.get("previous") or ""})
+        moedas = set(CFG["calendario"].get("moedas", ["USD"]))
+        impactos = set(CFG["calendario"].get("impactos", ["High"]))
+        eventos, vistos, algum = [], set(), False
+        for url in [CFG["calendario"]["url"]] + CFG["calendario"].get("urls_extra", []):
+            try:
+                r = HTTP.get(url, timeout=20)
+                r.raise_for_status()
+                algum = True
+                for e in r.json():
+                    if e.get("country") in moedas and e.get("impact") in impactos and e.get("date"):
+                        d = dt.datetime.fromisoformat(e["date"]).astimezone(UTC).isoformat()
+                        k = e.get("title", "?") + d
+                        if k in vistos:
+                            continue
+                        vistos.add(k)
+                        eventos.append({"titulo": e.get("title", "?"), "moeda": e.get("country"), "data": d,
+                                        "previsao": e.get("forecast") or "", "anterior": e.get("previous") or ""})
+            except Exception as e:
+                log("calendario", url, e)
+        if algum:
             cal["eventos"] = eventos
             cal["obtido"] = agora.isoformat()
-        except Exception as e:
-            log("calendario", e)
     return [dict(e, data=dt.datetime.fromisoformat(e["data"])) for e in cal.get("eventos", [])]
 
 
@@ -227,7 +266,18 @@ def eventos_hoje(agora):
     evs = sorted((e for e in calendario(agora) if e["data"].astimezone(TZ).date() == hoje), key=lambda e: e["data"])
     if not evs:
         return "Sem notícias de alto impacto hoje."
-    return "\n".join(f"• {hora_local(e['data'])} {e['moeda']} {e['titulo']}" for e in evs)
+    return "\n".join(f"• {hora_local(e['data'])} {e['moeda']} {e['titulo']}" + (" (já saiu)" if e["data"] <= agora else "")
+                     for e in evs)
+
+
+def eventos_proximos(agora, dias=7):
+    fim = agora + dt.timedelta(days=dias)
+    evs = sorted((e for e in calendario(agora) if agora < e["data"] <= fim), key=lambda e: e["data"])
+    if not evs:
+        return "Sem notícias de alto impacto nos próximos dias (ou o calendário da próxima semana ainda não saiu)."
+    dias_pt = ["seg", "ter", "qua", "qui", "sex", "sáb", "dom"]
+    return "\n".join(f"• {dias_pt[e['data'].astimezone(TZ).weekday()]} {e['data'].astimezone(TZ).strftime('%d/%m %H:%M')} "
+                     f"{e['moeda']} {e['titulo']}" for e in evs)
 
 
 # ------------------------------------------------------------------ notícias
@@ -381,19 +431,247 @@ def estado_ranges_texto():
     return "\n".join(linhas)
 
 
+# ------------------------------------------------------------------ liquidez (dias, semanas, sessões)
+def juntar_niveis(moeda, novos):
+    liq = ESTADO.setdefault("liquidez", {})
+    lista = liq.setdefault("niveis", {}).setdefault(moeda, [])
+    nomes = {n["nome"] for n in novos}
+    lista[:] = [n for n in lista if n["nome"] not in nomes] + novos
+
+
+def atualizar_niveis_dia(agora):
+    liq = ESTADO.setdefault("liquidez", {})
+    hoje = agora.date().isoformat()
+    if liq.get("dia") == hoje:
+        return
+    liq["dia"] = hoje
+    liq["niveis"] = {}
+    for m in CFG.get("liquidez", {}).get("moedas", []):
+        try:
+            s_ = simbolo_de(m)
+            ontem = velas(s_, "1d", 2)[-2]
+            semana = velas(s_, "1w", 2)[-2]
+            juntar_niveis(m, [
+                {"nome": "máximo de ontem", "preco": ontem["h"], "tipo": "max"},
+                {"nome": "mínimo de ontem", "preco": ontem["l"], "tipo": "min"},
+                {"nome": "máximo da semana passada", "preco": semana["h"], "tipo": "max"},
+                {"nome": "mínimo da semana passada", "preco": semana["l"], "tipo": "min"},
+            ])
+        except Exception as e:
+            log("niveis_dia", m, e)
+    limite = (agora - dt.timedelta(days=8)).date().isoformat()
+    liq["varridos"] = {k: v for k, v in liq.get("varridos", {}).items() if v >= limite}
+
+
+def varrimentos(ultima):
+    liq = ESTADO.get("liquidez", {})
+    varr = liq.setdefault("varridos", {})
+    hoje = dt.datetime.now(UTC).date().isoformat()
+    for m, niveis in liq.get("niveis", {}).items():
+        try:
+            vs = velas(simbolo_de(m), "15m", 12)
+        except Exception as e:
+            log("varrimentos", m, e)
+            continue
+        fechadas = [v for v in vs if ultima.timestamp() < v["fecha"] <= time.time()]
+        for n in niveis:
+            k = f"{m}|{n['nome']}|{n['preco']}"
+            if k in varr:
+                continue
+            for v in fechadas:
+                if n["tipo"] == "max":
+                    if v["c"] > n["preco"]:
+                        varr[k] = hoje  # rompeu e fechou acima: deixa de vigiar, sem alerta
+                        break
+                    if v["h"] > n["preco"]:
+                        enviar(f"💧 **{m} varreu o {n['nome']}** ({fmt(n['preco'])}) e fechou de volta abaixo, a {fmt(v['c'])}. "
+                               f"Os stops acima foram apanhados: atenção a uma reação para baixo.")
+                        varr[k] = hoje
+                        break
+                else:
+                    if v["c"] < n["preco"]:
+                        varr[k] = hoje
+                        break
+                    if v["l"] < n["preco"]:
+                        enviar(f"💧 **{m} varreu o {n['nome']}** ({fmt(n['preco'])}) e fechou de volta acima, a {fmt(v['c'])}. "
+                               f"Os stops abaixo foram apanhados: atenção a uma reação para cima.")
+                        varr[k] = hoje
+                        break
+
+
+def niveis_texto(moeda, preco):
+    niveis = ESTADO.get("liquidez", {}).get("niveis", {}).get(moeda, [])
+    varr = ESTADO.get("liquidez", {}).get("varridos", {})
+    if not niveis:
+        return ""
+    partes = []
+    for n in sorted(niveis, key=lambda n: -n["preco"]):
+        dist = (n["preco"] / preco - 1) * 100
+        feito = f"{moeda}|{n['nome']}|{n['preco']}" in varr
+        partes.append(f"{n['nome']} {fmt(n['preco'])} ({pct(dist)}){' já tocado' if feito else ''}")
+    return "Liquidez: " + "; ".join(partes)
+
+
+# ------------------------------------------------------------------ ranges candidatos
+def pivos(vs, k=3):
+    altos, baixos = [], []
+    for i in range(k, len(vs) - k):
+        janela = vs[i - k:i + k + 1]
+        if vs[i]["h"] == max(v["h"] for v in janela):
+            altos.append(i)
+        if vs[i]["l"] == min(v["l"] for v in janela):
+            baixos.append(i)
+    return altos, baixos
+
+
+def espacar(idx, minimo):
+    out = []
+    for i in idx:
+        if not out or i - out[-1] >= minimo:
+            out.append(i)
+    return out
+
+
+def procurar_range(vs, tf):
+    sc = CFG.get("scanner", {})
+    amin = sc.get("altura_min_pct", {}).get(tf, 1.5)
+    amax = sc.get("altura_max_pct", {}).get(tf, 15)
+    tol_pct = sc.get("tolerancia_pct", 12)
+    tmin = sc.get("toques_min", 2)
+    atual = vs[-1]["c"]
+    base = vs[:-1]
+    melhor = None
+    for W in range(30, len(base) + 1, 5):
+        jan = base[-W:]
+        topo, fundo = max(v["h"] for v in jan), min(v["l"] for v in jan)
+        h = topo - fundo
+        if h <= 0 or not (amin <= h / fundo * 100 <= amax) or not (fundo <= atual <= topo):
+            continue
+        ph, pl = pivos(jan)
+        tol = h * tol_pct / 100
+        th = espacar([i for i in ph if jan[i]["h"] >= topo - tol], 5)
+        tl = espacar([i for i in pl if jan[i]["l"] <= fundo + tol], 5)
+        if len(th) < tmin or len(tl) < tmin:
+            continue
+        terco = W // 3
+        m1 = sum(v["c"] for v in jan[:terco]) / terco
+        m3 = sum(v["c"] for v in jan[-terco:]) / terco
+        if abs(m1 - m3) > 0.35 * h:
+            continue
+        pontos = len(th) + len(tl)
+        if melhor is None or pontos > melhor["toques"] or (pontos == melhor["toques"] and W > melhor["velas"]):
+            melhor = {"topo": topo, "fundo": fundo, "velas": W, "toques": pontos, "cima": len(th), "baixo": len(tl),
+                      "pos": (atual - fundo) / h * 100, "altura": h / fundo * 100}
+    return melhor
+
+
+def texto_candidato(m, tf, c):
+    return (f"{m} {tf}: {fmt(c['fundo'])} a {fmt(c['topo'])} ({fmt(c['altura'], 1)}% de altura, {c['velas']} velas), "
+            f"toques {c['cima']} em cima e {c['baixo']} em baixo, preço a {fmt(c['pos'], 0)}% da altura")
+
+
+def scanner(agora, alertar=True):
+    sc = CFG.get("scanner", {})
+    guardados = ESTADO.setdefault("candidatos", {})
+    resultado = []
+    for m in sc.get("moedas", []):
+        for tf, n in sc.get("timeframes", {}).items():
+            k = f"{m}-{tf}"
+            try:
+                c = procurar_range(velas(simbolo_de(m), tf, n), tf)
+            except Exception as e:
+                log("scanner", k, e)
+                continue
+            if not c:
+                if alertar:
+                    guardados.pop(k, None)
+                continue
+            resultado.append(texto_candidato(m, tf, c))
+            prev = guardados.get(k)
+            h = c["topo"] - c["fundo"]
+            novo = not prev or abs(prev["topo"] - c["topo"]) > 0.15 * h or abs(prev["fundo"] - c["fundo"]) > 0.15 * h
+            if novo and alertar:
+                enviar(f"🧭 **Range candidato: {texto_candidato(m, tf, c)}.**\n"
+                       f"As linhas são os extremos da zona, não o primeiro toque: confirma no gráfico antes de o seguires.")
+            if novo and alertar:
+                guardados[k] = {"topo": c["topo"], "fundo": c["fundo"]}
+    return resultado
+
+
+# ------------------------------------------------------------------ open interest
+def open_interest(agora):
+    lim = CFG.get("alertas", {}).get("oi_1h_pct", 5)
+    hist = ESTADO.setdefault("oi_hist", {})
+    alertas = ESTADO.setdefault("alertas_tempo", {})
+    try:
+        hl = hyperliquid()
+    except Exception as e:
+        log("oi", e)
+        return
+    ts = agora.timestamp()
+    for m in CFG.get("moedas", []):
+        f = hl.get(m.upper())
+        if not f:
+            continue
+        pontos = [p for p in hist.get(m, []) if ts - p[0] <= 30 * 3600]
+        antes = [p for p in pontos if 55 * 60 <= ts - p[0] <= 90 * 60]
+        pontos.append([ts, f["oi_usd"], f["preco"]])
+        hist[m] = pontos
+        if not antes:
+            continue
+        p0 = antes[-1]
+        var_oi = (f["oi_usd"] / p0[1] - 1) * 100
+        var_px = (f["preco"] / p0[2] - 1) * 100
+        tipo = None
+        if var_oi >= lim and abs(var_px) < 1:
+            tipo = "sobe"
+            texto = (f"📈 **Open interest de {m} subiu {pct(var_oi, 1)} numa hora com o preço quase parado ({pct(var_px)}).** "
+                     f"Muita gente a abrir posições ao mesmo tempo: combustível para um movimento forte para um dos lados.")
+        elif var_oi <= -lim and abs(var_px) >= 1.5:
+            tipo = "cai"
+            texto = (f"🧨 **Open interest de {m} caiu {pct(var_oi, 1)} numa hora com o preço a mexer {pct(var_px)}.** "
+                     f"Posições a ser fechadas à força: sinal de liquidações em cadeia.")
+        if tipo:
+            chave = f"oi-{tipo}-{m}"
+            ult = alertas.get(chave)
+            if not ult or agora - dt.datetime.fromisoformat(ult) > dt.timedelta(hours=2):
+                enviar(texto)
+                alertas[chave] = agora.isoformat()
+
+
+def oi_24h(m, agora):
+    pontos = ESTADO.get("oi_hist", {}).get(m, [])
+    ts = agora.timestamp()
+    antes = [p for p in pontos if 23 * 3600 <= ts - p[0] <= 26 * 3600]
+    if not antes or not pontos:
+        return None
+    return (pontos[-1][1] / antes[0][1] - 1) * 100
+
+
+# ------------------------------------------------------------------ fear & greed
+def fear_greed():
+    r = HTTP.get("https://api.alternative.me/fng/?limit=2", timeout=15)
+    r.raise_for_status()
+    d = r.json()["data"]
+    trad = {"Extreme Fear": "medo extremo", "Fear": "medo", "Neutral": "neutro", "Greed": "ganância", "Extreme Greed": "ganância extrema"}
+    hoje = f"{d[0]['value']} ({trad.get(d[0]['value_classification'], d[0]['value_classification'])})"
+    ontem = f", ontem {d[1]['value']}" if len(d) > 1 else ""
+    return f"Fear & Greed: {hoje}{ontem}"
+
+
 # ------------------------------------------------------------------ relatório
-def bloco_moeda(m, semanal=False):
-    s = simbolo_de(m)
-    tk = ticker24(s)
+def bloco_moeda(m, agora):
+    s_ = simbolo_de(m)
+    tk = ticker24(s_)
     preco = float(tk["lastPrice"])
     alto, baixo = float(tk["highPrice"]), float(tk["lowPrice"])
     pos24 = (preco - baixo) / (alto - baixo) * 100 if alto > baixo else 50
-    dias = velas(s, "1d", 8)
+    dias = velas(s_, "1d", 8)
     var7 = (preco / dias[0]["o"] - 1) * 100
     alto7, baixo7 = max(v["h"] for v in dias[-7:]), min(v["l"] for v in dias[-7:])
     linhas = [f"**{m}** {fmt(preco)}  ({pct(float(tk['priceChangePercent']))} 24h, {pct(var7)} 7d)"]
     try:
-        linhas.append(f"Tendência: 4h {tendencia(s, '4h')}, diário {tendencia(s, '1d')}")
+        linhas.append(f"Tendência: 4h {tendencia(s_, '4h')}, diário {tendencia(s_, '1d')}")
     except Exception as e:
         log("tendencia", m, e)
     linhas.append(f"24h: mín {fmt(baixo)}, máx {fmt(alto)}, preço a {fmt(pos24, 0)}% do intervalo")
@@ -401,26 +679,45 @@ def bloco_moeda(m, semanal=False):
     try:
         f = hyperliquid().get(m.upper())
         if f:
-            linhas.append(f"Funding {fmt(f['funding8h'], 4)}% por 8h, open interest {fmt(f['oi_usd'] / 1e6, 0)} M$")
+            v24 = oi_24h(m, agora)
+            linhas.append(f"Funding {fmt(f['funding8h'], 4)}% por 8h, open interest {fmt(f['oi_usd'] / 1e6, 0)} M$"
+                          + (f" ({pct(v24, 1)} em 24h)" if v24 is not None else ""))
     except Exception as e:
         log("hyperliquid", e)
+    nv = niveis_texto(m, preco)
+    if nv:
+        linhas.append(nv)
     return "\n".join(linhas)
 
 
 def relatorio(nome, agora):
-    partes = [f"📊 **Relatório da {nome}**, {agora.astimezone(TZ).strftime('%d/%m %H:%M')}"]
+    local = agora.astimezone(TZ)
+    partes = [f"📊 **Relatório da {nome}**, {local.strftime('%d/%m %H:%M')}"]
+    if nome == "manhã" and CFG.get("fear_greed", True):
+        try:
+            partes[0] += "\n" + fear_greed()
+        except Exception as e:
+            log("fear_greed", e)
     for m in CFG.get("moedas", []):
         try:
-            partes.append(bloco_moeda(m))
+            partes.append(bloco_moeda(m, agora))
         except Exception as e:
             log("relatorio", m, e)
             partes.append(f"**{m}**: sem dados agora.")
     partes.append("**Notícias de alto impacto hoje**\n" + eventos_hoje(agora))
+    try:
+        cands = scanner(agora, alertar=False)
+        partes.append("**Ranges candidatos**\n" + ("\n".join("• " + c for c in cands) if cands else "Nenhum range claro agora."))
+    except Exception as e:
+        log("scanner_relatorio", e)
     rg = estado_ranges_texto()
     if rg:
         partes.append("**Os teus ranges**\n" + rg)
-    if nome == "noite" and agora.astimezone(TZ).weekday() == 6:
-        partes.append("🗓️ Fim de semana: revê os ranges no niveis.json e os trades da semana no teu diário.")
+    if nome == "noite" and local.weekday() == 4:
+        partes.append("🗓️ **Fim de semana à porta.** Menos liquidez, mais desvios falsos e movimentos sem continuação. "
+                      "Se operares, sê mais exigente com os setups.")
+    if nome == "noite" and local.weekday() == 6:
+        partes.append("🗓️ **Próxima semana: notícias de alto impacto**\n" + eventos_proximos(agora))
     enviar("\n\n".join(partes))
 
 
@@ -436,17 +733,25 @@ def main():
     ultima = dt.datetime.fromisoformat(ESTADO["ultima_execucao"]) if ESTADO.get("ultima_execucao") else agora - dt.timedelta(minutes=15)
     ultima = max(ultima, agora - dt.timedelta(minutes=90))  # depois de uma paragem longa, não repete o passado
 
-    if MODO == "teste":
-        enviar("✅ O bot está ligado a este canal. A seguir vem um relatório de teste.")
-        relatorio("manhã" if agora.astimezone(TZ).hour < 15 else "noite", agora)
-    elif MODO == "relatorio":
+    if MODO in ("teste", "relatorio"):
+        try:
+            atualizar_niveis_dia(agora)
+        except Exception as e:
+            log("niveis_dia", e)
+        if MODO == "teste":
+            enviar("✅ O bot está ligado a este canal. A seguir vem um relatório de teste.")
         relatorio("manhã" if agora.astimezone(TZ).hour < 15 else "noite", agora)
 
-    for nome, f in [("aberturas", lambda: aberturas(ultima, agora)),
+    hora_cheia = agora.minute < 15 or MODO in ("teste", "relatorio")
+    for nome, f in [("niveis_dia", lambda: atualizar_niveis_dia(agora)),
+                    ("aberturas", lambda: aberturas(ultima, agora)),
                     ("relatorios", lambda: relatorios(ultima, agora)),
                     ("calendario", lambda: avisos_calendario(agora)),
                     ("noticias", noticias),
                     ("movimentos", lambda: movimentos_e_funding(agora)),
+                    ("open_interest", lambda: open_interest(agora)),
+                    ("varrimentos", lambda: varrimentos(ultima)),
+                    ("scanner", lambda: scanner(agora) if hora_cheia else None),
                     ("ranges", lambda: ranges_dmt(ultima))]:
         try:
             f()
